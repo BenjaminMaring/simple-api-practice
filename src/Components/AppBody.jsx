@@ -6,14 +6,33 @@ export default function AppBody() {
     const [page, setPage] = React.useState(1);
     const [result, setResult] = React.useState([]);
 
+    //state for web worker
+    
+
+    //I couldnt think of a way to implement the worker, 
+    //I thought I could have it render the jsx elements as the function getResultElems is doing,
+    //however I ran into issues getting the worker to render them because its not a .jsx file, and vite requires it to be a jsx file.
+    //I ran into other troubles trying to implement the worker outside a useEffect as it causes a memory leak. 
+    //so Instead I have it calculating Eulers number using a series expansion (suggested by Chat GPT)
+
     React.useEffect(() => {
-        const data = getData(type)
+        const worker = new Worker('../src/dataWorker.js');
+        worker.postMessage(30);
+        worker.onmessage = (e) => {
+            console.log(e.data);
+        }
+        return () => worker.terminate();
+    }, [])
+
+    React.useEffect(() => {
+        const data = getData()
+        Promise.any([data])
             .then(res => {
                 setResult(res)
             })
     }, [type, page])
 
-    async function getData(type) {
+    async function getData() {
         try {
             const response = await fetch(`https://swapi.dev/api/${type}/?page=${page}`)
             const data = await response.json()
